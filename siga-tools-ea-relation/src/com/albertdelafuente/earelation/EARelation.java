@@ -228,7 +228,9 @@ public class EARelation {
         org.sparx.Package reqp, wfp, root;
         org.sparx.Element req, wf;
         
-        for (i=0; i<sPackage.GetElements().GetCount(); i++) {
+        relMatrix.length
+        
+        for (i=0; i<relMatrix.sPackage.GetElements().GetCount(); i++) {
    	    sElement = sPackage.GetElements().GetAt(i);
             for (j=0; j<dPackage.GetElements().GetCount(); j++) {
                 dElement = dPackage.GetElements().GetAt(j);
