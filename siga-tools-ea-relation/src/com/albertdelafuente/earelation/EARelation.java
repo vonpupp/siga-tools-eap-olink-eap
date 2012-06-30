@@ -293,7 +293,7 @@ public class EARelation {
         return p;
     }
     
-    void relate() throws IOException {
+    void relateStatic() throws IOException {
         short i, j;
         org.sparx.Package sPackage, dPackage;
         org.sparx.Element sElement, dElement;
@@ -365,35 +365,11 @@ public class EARelation {
                 }
             }
         }
-
-//        for (i=0; i<sPackage.GetElements().GetCount(); i++) {
-//            for (j=0; j<dPackage.GetElements().GetCount(); j++) {
-//                dElement = dPackage.GetElements().GetAt(j);
-//
-//                out.printf("s(%d) = %s\n", i, sElement.GetName());
-//                out.printf("s(%d) = %s\n", i, subAlias(sElement.GetName()));
-//                out.printf("d(%d) = %s\n", j, dElement.GetName());
-//                out.printf("d(%d) = %s\n", j, subAlias(dElement.GetName()));
-//                
-//                if (subAlias(sElement.GetAlias()).equals(subAlias(dElement.GetAlias()))) {
-//                    out.printf("Creating relation between:\n");
-//                    out.printf("  Element #%s\n", sElement.GetElementGUID());
-//                    out.printf("  Element #%s\n", dElement.GetElementGUID());
-////                    wf.GetConnectors().AddNew(pEapF, pEapF);
-//                    
-//                    //Connector addNew = wf.GetConnectors().AddNew("name", "UseCase"),
-//                    Connector addNew = sElement.GetConnectors().AddNew(subAlias(dElement.GetAlias()), "Realization");
-//                    addNew.SetSupplierID(dElement.GetElementID());
-//                    addNew.Update();
-//                    sElement.Refresh();
-//                }
-//            }
-//        }
     }
     
     public void run (String[] args) throws Exception {
         // Parameters example
-        // earelation -e file.eap -m matrix.csv -r /root/model/rowns -c /root/model/colns -l file -v 3
+        // earelation -e file.eap -m map.csv -r /root/model/rowns -c /root/model/colns -l file -v 3
         // earelation -eap file.eap -l -option(-all -guid) /root/model/submodel -o file -v 3
         // $0 -i eap -o file
         
