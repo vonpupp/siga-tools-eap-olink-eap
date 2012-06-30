@@ -18,11 +18,15 @@ import org.apache.commons.csv.CSVStrategy;
 public class EARelation {
     private String pRelationsF, pEapF, pSourceNS, pDestinationNS;
     private String[][] relMatrix;
+    private Map<String, org.sparx.Element> sMap;
+    private Map<String, org.sparx.Element> dMap;
     private org.sparx.Repository repo;
     
     EARelation() {
         pEapF = "";
         repo = new org.sparx.Repository();
+        sMap = new HashMap<String, org.sparx.Element>();
+        dMap = new HashMap<String, org.sparx.Element>();
         out.println("constructor");
     }
 
@@ -265,20 +269,27 @@ public class EARelation {
         return st.nextToken();
     }
     
-    org.sparx.Package nsPackageFetch(String ns){
-        int i = 1;
+    org.sparx.Package nsPackageFetch(String ns, Map<String, org.sparx.Element> m){
+        short i;
         org.sparx.Package p;
+        org.sparx.Element e;
         
         // Example:
         // SIGA stable|Biblioteca REQ..|Requisitos FI|Comum
         
         p = repo.GetModels().GetByName(nsTokenGet(ns, 0));
         out.printf("opening... %s\n", nsTokenGet(ns, 0));
-        while(i < nsTokenCount(ns)) {
+        for (i = 1; i < nsTokenCount(ns); i++) {
             p = p.GetPackages().GetByName(nsTokenGet(ns, i));
             out.printf("opening... %s\n", nsTokenGet(ns, i));
-            i++;
         }
+        
+        for (i = 0; i < p.GetElements().GetCount(); i++) {
+            e = p.GetElements().GetAt(i);
+            m.put(e.GetAlias().substring(0, 6), e);
+            out.printf("mapping... [%s] -> [%s]\n", e.GetAlias().substring(0, 6), e.GetName());
+        }
+        
         return p;
     }
     
@@ -287,10 +298,10 @@ public class EARelation {
         org.sparx.Package sPackage, dPackage;
         org.sparx.Element sElement, dElement;
        
-        sPackage = nsPackageFetch(pSourceNS);
-        dPackage = nsPackageFetch(pDestinationNS);
+        sPackage = nsPackageFetch(pSourceNS, sMap);
+        dPackage = nsPackageFetch(pDestinationNS, dMap);
         
-        for (i=0; i<sPackage.GetElements().GetCount(); i++) {
+        for (i = 0; i<sPackage.GetElements().GetCount(); i++) {
    	    sElement = sPackage.GetElements().GetAt(i);
             for (j=0; j<dPackage.GetElements().GetCount(); j++) {
                 dElement = dPackage.GetElements().GetAt(j);
@@ -317,35 +328,42 @@ public class EARelation {
     }
     
     void relatecsv() throws IOException {
-        short i, j;
+        short i;
+        String relname;
         org.sparx.Package sPackage, dPackage;
         org.sparx.Element sElement, dElement;
         Connector addNew;
        
-        sPackage = nsPackageFetch(pSourceNS);
-        dPackage = nsPackageFetch(pDestinationNS);
+        sPackage = nsPackageFetch(pSourceNS, sMap);
+        dPackage = nsPackageFetch(pDestinationNS, dMap);
 
-        i = 0;
-        while (i < relMatrix.length) {
-            sElement = sPackage.GetElements().GetByName(relMatrix[i][0].substring(0, 6));
-            dElement = dPackage.GetElements().GetByName(relMatrix[i][1].substring(0, 6));
-            out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6));
-            out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
+        for (i = 1; i < relMatrix.length; i++) {
+            sElement = sMap.get(relMatrix[i][0].substring(0, 6));
+            dElement = dMap.get(relMatrix[i][1].substring(0, 6));
+            //out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6));
+            //out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
             if (sElement == null){
-                out.printf("SKIPPING (not found): %s on namespace %s\n", sElement.GetName(), pSourceNS);
+                out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][0].substring(0, 6), pSourceNS);
             } else {
                 out.printf("Source element found... %s\n", sElement.GetName());
-                if (dElement != null){
+                if (dElement == null){
+                    out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][1].substring(0, 6), pDestinationNS);
+                } else {
+                    relname = relMatrix[i][2];
+                    if (relMatrix[i][2].compareToIgnoreCase("auto") == 0 || 
+                        relMatrix[i][2].equals("")) {
+                        relname = "rel-" + relMatrix[i][0].substring(0, 6) + "-" +
+                            relMatrix[i][1].substring(0, 6);
+                    }
                     out.printf("Destination element found... %s\n", dElement.GetName());
-                    out.printf("Doing the magic tricks, creating relations between [%s] and [%s]\n",
-                        sElement.GetName(), dElement.GetName());
-//                    addNew = sElement.GetConnectors().AddNew(subAlias(dElement.GetAlias()), "Realization");
-//                    addNew.SetSupplierID(dElement.GetElementID());
-//                    addNew.Update();
-//                    sElement.Refresh();
+                    out.printf("Doing the magic tricks: creating relation [%s] between [%s] and [%s]\n",
+                        relname, sElement.GetName(), dElement.GetName());
+                    addNew = sElement.GetConnectors().AddNew(relname, "Realization");
+                    addNew.SetSupplierID(dElement.GetElementID());
+                    addNew.Update();
+                    sElement.Refresh();
                 }
             }
-            i++;
         }
 
 //        for (i=0; i<sPackage.GetElements().GetCount(); i++) {
@@ -379,7 +397,7 @@ public class EARelation {
         // earelation -eap file.eap -l -option(-all -guid) /root/model/submodel -o file -v 3
         // $0 -i eap -o file
         
-        pEapF = "C:\\eap-iterator\\siga.eap";
+        pEapF = "C:\\siga-tools-ea-relation\\siga.eap";
         pRelationsF = "C:\\siga-tools-ea-relation\\relation-list.csv";
         
         try {
@@ -388,7 +406,7 @@ public class EARelation {
             //listRepositoryInfo();
             //listModels(2, repo);
             //nsPackageFetch("SIGA stable|Biblioteca de Requisitos (RFI / RFN / RNF / RN)|Requisitos Funcionais de Interface (RFI)|Comum - Requisitos Funcionais de Interface (RFI)");
-            nsPackageFetch("SIGA stable|Biblioteca de Interfaces|test");
+            //nsPackageFetch("SIGA stable|Biblioteca de Interfaces|test", sMap);
             out.printf("getSourceNS() = %s\n", getSourceNS());
             out.printf("getDestinationNS() = %s\n", getDestinationNS());
             relExists("RFI001.", "RFI001.");
