@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editorepo.
  */
-package com.albertdelafuente.earelation;
+package com.albertdelafuente.siga.apoio.olink;
 import org.sparx.*;
 import java.lang.*;
 import java.util.*;
@@ -15,14 +15,14 @@ import org.apache.commons.csv.CSVStrategy;
  *
  * @author afu
  */
-public class EARelation {
+public class Olink {
     private String pRelationsF, pEapF, pSourceNS, pDestinationNS;
     private String[][] relMatrix;
     private Map<String, org.sparx.Element> sMap;
     private Map<String, org.sparx.Element> dMap;
     private org.sparx.Repository repo;
     
-    EARelation() {
+    Olink() {
         pEapF = "";
         repo = new org.sparx.Repository();
         sMap = new HashMap<String, org.sparx.Element>();
@@ -329,10 +329,10 @@ public class EARelation {
     
     void relatecsv() throws IOException {
         short i;
-        String relname;
+        String relsdname, reldsname;
         org.sparx.Package sPackage, dPackage;
         org.sparx.Element sElement, dElement;
-        Connector addNew;
+        Connector sdcon, dscon;
        
         sPackage = nsPackageFetch(pSourceNS, sMap);
         dPackage = nsPackageFetch(pDestinationNS, dMap);
@@ -349,19 +349,33 @@ public class EARelation {
                 if (dElement == null){
                     out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][1].substring(0, 6), pDestinationNS);
                 } else {
-                    relname = relMatrix[i][2];
+                    relsdname = relMatrix[i][2];
                     if (relMatrix[i][2].compareToIgnoreCase("auto") == 0 || 
                         relMatrix[i][2].equals("")) {
-                        relname = "rel-" + relMatrix[i][0].substring(0, 6) + "-" +
+                        relsdname = "rel-" + relMatrix[i][0].substring(0, 6) + "-" +
                             relMatrix[i][1].substring(0, 6);
+                        reldsname = "rel-" + relMatrix[i][1].substring(0, 6) + "-" +
+                            relMatrix[i][0].substring(0, 6);
                     }
                     out.printf("Destination element found... %s\n", dElement.GetName());
+                    
+                    // Source -> Destination relation
                     out.printf("Doing the magic tricks: creating relation [%s] between [%s] and [%s]\n",
-                        relname, sElement.GetName(), dElement.GetName());
-                    addNew = sElement.GetConnectors().AddNew(relname, "Realization");
-                    addNew.SetSupplierID(dElement.GetElementID());
-                    addNew.Update();
+                        relsdname, sElement.GetName(), dElement.GetName());
+                    
+                    sdcon = sElement.GetConnectors().AddNew(relsdname, "Realization");
+                    sdcon.SetSupplierID(dElement.GetElementID());
+                    sdcon.Update();
                     sElement.Refresh();
+                    
+                    // Destination -> Source
+//                    out.printf("Doing the magic tricks: creating relation [%s] between [%s] and [%s]\n",
+//                        reldsname, dElement.GetName(), sElement.GetName());
+//                    
+//                    dscon = dElement.GetConnectors().AddNew(reldsname, "Realization");
+//                    dscon.SetSupplierID(sElement.GetElementID());
+//                    dscon.Update();
+//                    dElement.Refresh();
                 }
             }
         }
@@ -403,7 +417,7 @@ public class EARelation {
      */
     public static void main(String[] args) {
         try {
-            EARelation eai = new EARelation();
+            Olink eai = new Olink();
             eai.run(args);
         } catch (Exception e) {
             e.printStackTrace();
