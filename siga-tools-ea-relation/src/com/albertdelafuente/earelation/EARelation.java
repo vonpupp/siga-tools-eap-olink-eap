@@ -224,39 +224,21 @@ public class EARelation {
     }
     
     boolean relExists(String a, String b){
-        short i, j;
-        org.sparx.Package reqp, wfp, root;
-        org.sparx.Element req, wf;
+        short i;
+        boolean result;
         
-        relMatrix.length
-        
-        for (i=0; i<relMatrix.sPackage.GetElements().GetCount(); i++) {
-   	    sElement = sPackage.GetElements().GetAt(i);
-            for (j=0; j<dPackage.GetElements().GetCount(); j++) {
-                dElement = dPackage.GetElements().GetAt(j);
+        out.printf("relMatrix.length = %d\n", relMatrix.length);
 
-                out.printf("s(%d) = %s\n", i, sElement.GetName());
-                out.printf("s(%d) = %s\n", i, subAlias(sElement.GetName()));
-                out.printf("d(%d) = %s\n", j, dElement.GetName());
-                out.printf("d(%d) = %s\n", j, subAlias(dElement.GetName()));
-                
-                if (subAlias(sElement.GetAlias()).equals(subAlias(dElement.GetAlias()))) {
-                    out.printf("Creating relation between:\n");
-                    out.printf("  Element #%s\n", sElement.GetElementGUID());
-                    out.printf("  Element #%s\n", dElement.GetElementGUID());
-//                    wf.GetConnectors().AddNew(pEapF, pEapF);
-                    
-                    //Connector addNew = wf.GetConnectors().AddNew("name", "UseCase"),
-                    Connector addNew = sElement.GetConnectors().AddNew(subAlias(dElement.GetAlias()), "Realization");
-                    addNew.SetSupplierID(dElement.GetElementID());
-                    addNew.Update();
-                    sElement.Refresh();
-                }
-            }
+        i = 0;
+        result = false;
+        while (i < relMatrix.length && !result) {
+            out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6), a.substring(0, 6));
+            out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6), b.substring(0, 6));
+            result = a.substring(0, 6).equals(relMatrix[i][0].substring(0, 6)) &&
+                     b.substring(0, 6).equals(relMatrix[i][1].substring(0, 6));
+            i++;
         }
-
-        
-        return true;
+        return result;
     }
     
     int nsTokenCount(String ns){
@@ -300,7 +282,7 @@ public class EARelation {
         return p;
     }
     
-    void relatecsv() throws IOException {
+    void relate() throws IOException {
         short i, j;
         org.sparx.Package sPackage, dPackage;
         org.sparx.Element sElement, dElement;
@@ -334,6 +316,63 @@ public class EARelation {
         }
     }
     
+    void relatecsv() throws IOException {
+        short i, j;
+        org.sparx.Package sPackage, dPackage;
+        org.sparx.Element sElement, dElement;
+        Connector addNew;
+       
+        sPackage = nsPackageFetch(pSourceNS);
+        dPackage = nsPackageFetch(pDestinationNS);
+
+        i = 0;
+        while (i < relMatrix.length) {
+            sElement = sPackage.GetElements().GetByName(relMatrix[i][0].substring(0, 6));
+            dElement = dPackage.GetElements().GetByName(relMatrix[i][1].substring(0, 6));
+            out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6));
+            out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
+            if (sElement == null){
+                out.printf("SKIPPING (not found): %s on namespace %s\n", sElement.GetName(), pSourceNS);
+            } else {
+                out.printf("Source element found... %s\n", sElement.GetName());
+                if (dElement != null){
+                    out.printf("Destination element found... %s\n", dElement.GetName());
+                    out.printf("Doing the magic tricks, creating relations between [%s] and [%s]\n",
+                        sElement.GetName(), dElement.GetName());
+//                    addNew = sElement.GetConnectors().AddNew(subAlias(dElement.GetAlias()), "Realization");
+//                    addNew.SetSupplierID(dElement.GetElementID());
+//                    addNew.Update();
+//                    sElement.Refresh();
+                }
+            }
+            i++;
+        }
+
+//        for (i=0; i<sPackage.GetElements().GetCount(); i++) {
+//            for (j=0; j<dPackage.GetElements().GetCount(); j++) {
+//                dElement = dPackage.GetElements().GetAt(j);
+//
+//                out.printf("s(%d) = %s\n", i, sElement.GetName());
+//                out.printf("s(%d) = %s\n", i, subAlias(sElement.GetName()));
+//                out.printf("d(%d) = %s\n", j, dElement.GetName());
+//                out.printf("d(%d) = %s\n", j, subAlias(dElement.GetName()));
+//                
+//                if (subAlias(sElement.GetAlias()).equals(subAlias(dElement.GetAlias()))) {
+//                    out.printf("Creating relation between:\n");
+//                    out.printf("  Element #%s\n", sElement.GetElementGUID());
+//                    out.printf("  Element #%s\n", dElement.GetElementGUID());
+////                    wf.GetConnectors().AddNew(pEapF, pEapF);
+//                    
+//                    //Connector addNew = wf.GetConnectors().AddNew("name", "UseCase"),
+//                    Connector addNew = sElement.GetConnectors().AddNew(subAlias(dElement.GetAlias()), "Realization");
+//                    addNew.SetSupplierID(dElement.GetElementID());
+//                    addNew.Update();
+//                    sElement.Refresh();
+//                }
+//            }
+//        }
+    }
+    
     public void run (String[] args) throws Exception {
         // Parameters example
         // earelation -e file.eap -m matrix.csv -r /root/model/rowns -c /root/model/colns -l file -v 3
@@ -352,6 +391,8 @@ public class EARelation {
             nsPackageFetch("SIGA stable|Biblioteca de Interfaces|test");
             out.printf("getSourceNS() = %s\n", getSourceNS());
             out.printf("getDestinationNS() = %s\n", getDestinationNS());
+            relExists("RFI001.", "RFI001.");
+            relatecsv();
         } catch(Exception e) {
         } finally {
         }
