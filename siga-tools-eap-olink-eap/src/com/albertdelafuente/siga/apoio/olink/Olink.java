@@ -286,8 +286,10 @@ public class Olink {
         
         for (i = 0; i < p.GetElements().GetCount(); i++) {
             e = p.GetElements().GetAt(i);
-            m.put(e.GetAlias().substring(0, 6), e);
-            out.printf("mapping... [%s] -> [%s]\n", e.GetAlias().substring(0, 6), e.GetName());
+            out.printf("got element... %s\n", e.GetName());
+            //m.put(e.GetAlias().substring(0, 6), e);
+            m.put(e.GetAlias(), e);
+            out.printf("mapping... [%s] -> [%s]\n", e.GetAlias(), e.GetName());
         }
         
         return p;
@@ -338,24 +340,22 @@ public class Olink {
         dPackage = nsPackageFetch(pDestinationNS, dMap);
 
         for (i = 1; i < relMatrix.length; i++) {
-            sElement = sMap.get(relMatrix[i][0].substring(0, 6));
-            dElement = dMap.get(relMatrix[i][1].substring(0, 6));
+            sElement = sMap.get(relMatrix[i][0]); //.substring(0, 6));
+            dElement = dMap.get(relMatrix[i][1]); //.substring(0, 6));
             //out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6));
-            //out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
+            //out.prinopentf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
             if (sElement == null){
-                out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][0].substring(0, 6), pSourceNS);
+                out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][0], pSourceNS); //.substring(0, 6), pSourceNS);
             } else {
                 out.printf("Source element found... %s\n", sElement.GetName());
                 if (dElement == null){
-                    out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][1].substring(0, 6), pDestinationNS);
+                    out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][1], pDestinationNS);
                 } else {
                     relsdname = relMatrix[i][2];
                     if (relMatrix[i][2].compareToIgnoreCase("auto") == 0 || 
                         relMatrix[i][2].equals("")) {
-                        relsdname = "rel-" + relMatrix[i][0].substring(0, 6) + "-" +
-                            relMatrix[i][1].substring(0, 6);
-                        reldsname = "rel-" + relMatrix[i][1].substring(0, 6) + "-" +
-                            relMatrix[i][0].substring(0, 6);
+                        relsdname = "rel-" + relMatrix[i][0] + "-" + relMatrix[i][1];
+                        reldsname = "rel-" + relMatrix[i][1] + "-" + relMatrix[i][0];
                     }
                     out.printf("Destination element found... %s\n", dElement.GetName());
                     
@@ -387,8 +387,8 @@ public class Olink {
         // earelation -eap file.eap -l -option(-all -guid) /root/model/submodel -o file -v 3
         // $0 -i eap -o file
         
-        pEapF = "C:\\siga-tools-ea-relation\\siga.eap";
-        pRelationsF = "C:\\siga-tools-ea-relation\\relation-list.csv";
+        pEapF = "C:\\uc-siga\\120813-sigav13.EAP";
+        pRelationsF = "C:\\siga-tools\\siga-tools-doc-reqbox-txt\\out-rfi-fun-links.csv";
         
         try {
             loadRelationships();
@@ -399,9 +399,10 @@ public class Olink {
             //nsPackageFetch("SIGA stable|Biblioteca de Interfaces|test", sMap);
             out.printf("getSourceNS() = %s\n", getSourceNS());
             out.printf("getDestinationNS() = %s\n", getDestinationNS());
-            relExists("RFI001.", "RFI001.");
+            //relExists("RFI001.", "RFI001.");
             relatecsv();
         } catch(Exception e) {
+            out.printf("oh oh...\n");
         } finally {
         }
         //listSubPackages(4, repo.GetModels().GetAt((short) 0));
