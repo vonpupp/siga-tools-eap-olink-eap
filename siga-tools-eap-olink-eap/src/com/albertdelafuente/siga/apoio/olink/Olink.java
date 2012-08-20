@@ -389,6 +389,12 @@ public class Olink {
         
         pEapF = "C:\\uc-siga\\120813-sigav13.EAP";
         pRelationsF = "C:\\siga-tools\\siga-tools-doc-reqbox-txt\\out-rfi-fun-links.csv";
+        if (args.length == 2) {
+            pEapF = args[0];
+            pRelationsF = args[1];
+            out.printf("Input EA model:             %s\n", pEapF);
+            out.printf("Input relationship file:    %s\n", pRelationsF);
+        }
         
         try {
             loadRelationships();
